@@ -9,9 +9,7 @@ test('login to dev.iconcile.com', async ({ page }) => {
   }
 
   // Navigate to the login page
-  await page.goto('https://dev.iconcile.com');
-
-  // Wait for the login form to load (JS SPA)
+  await page.goto('https://dev.iconcile.com/session/signin');
   await page.waitForLoadState('networkidle');
 
   // Fill in login credentials
@@ -20,10 +18,8 @@ test('login to dev.iconcile.com', async ({ page }) => {
 
   // Click the Login button
   await page.getByRole('button', { name: 'Login' }).click();
-
-  // Wait for navigation after login
   await page.waitForLoadState('networkidle');
 
-  // Verify successful login - check that we're no longer on the signin page
+  // Verify successful login
   await expect(page).not.toHaveURL(/signin/i, { timeout: 15000 });
 });
