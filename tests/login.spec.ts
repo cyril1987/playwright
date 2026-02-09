@@ -15,8 +15,8 @@ test('login to dev.iconcile.com', async ({ page }) => {
   await page.waitForLoadState('networkidle');
 
   // Fill in login credentials
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="password"]').fill(password);
 
   // Click the Login button
   await page.getByRole('button', { name: 'Login' }).click();
