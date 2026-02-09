@@ -5,8 +5,5 @@ export default defineConfig({
   timeout: 30000,
   use: {
     headless: true,
-    launchOptions: {
-      executablePath: '/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome',
-    },
   },
 });
