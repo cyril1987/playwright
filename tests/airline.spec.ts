@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+// Use a unique suffix to avoid conflicts across test runs
+const uniqueId = Date.now().toString().slice(-4);
+const airlineData = {
+  name: `TestAirline${uniqueId}`,
+  numCode: `9${uniqueId.slice(-2)}`,
+  iataCode: 'TA',
+  icaoCode: 'TSA',
+  allianceCode: 'T',
+};
+
 test.describe('Airline Master', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.LOGIN_EMAIL;
@@ -23,45 +33,62 @@ test.describe('Airline Master', () => {
     await page.getByRole('button', { name: 'Airline' }).click();
   });
 
-  test('add a new airline', async ({ page }) => {
+  test('add a new airline and verify it appears in search results', async ({ page }) => {
+    // Step 1: Add a new airline
     await page.getByRole('button', { name: 'Add New Airline' }).click();
 
-    // Fill in airline details
-    await page.getByRole('textbox', { name: 'Airline name' }).fill('TestCase');
-    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill('965');
-    await page.getByRole('textbox', { name: 'Airline IATA Code' }).fill('AB');
-    await page.getByRole('textbox', { name: 'Airline ICAO Code' }).fill('AB');
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill('A');
+    await page.getByRole('textbox', { name: 'Airline name' }).fill(airlineData.name);
+    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
+    await page.getByRole('textbox', { name: 'Airline IATA Code' }).fill(airlineData.iataCode);
+    await page.getByRole('textbox', { name: 'Airline ICAO Code' }).fill(airlineData.icaoCode);
+    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(airlineData.allianceCode);
 
-    // Save
     await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Step 2: Search by Alliance Code and verify the record exists
+    await page.getByRole('textbox', { name: 'Search' }).click();
+    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(airlineData.allianceCode);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Verify the row contains the correct data
+    const row = page.getByRole('row').filter({ hasText: airlineData.name });
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await expect(row).toContainText(airlineData.numCode);
+    await expect(row).toContainText(airlineData.iataCode);
+    await expect(row).toContainText(airlineData.icaoCode);
+    await expect(row).toContainText(airlineData.allianceCode);
   });
 
-  test('search airline by Num Code', async ({ page }) => {
+  test('edit an airline and verify updated values', async ({ page }) => {
+    const updatedAllianceCode = 'TA';
+
+    // Step 1: Search for the airline
     await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill('AB');
+    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(airlineData.allianceCode);
     await page.getByRole('button', { name: 'Apply' }).click();
-  });
+    await page.waitForLoadState('networkidle');
 
-  test('search airline by Alliance Code', async ({ page }) => {
-    await page.getByTestId('CloseOutlinedIcon').click();
-    await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill('A');
-    await page.getByRole('button', { name: 'Apply' }).click();
-  });
+    // Step 2: Click edit on the matching row
+    const row = page.getByRole('row').filter({ hasText: airlineData.name });
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.getByLabel('Edit').click();
 
-  test('edit an airline', async ({ page }) => {
-    // Search for the airline to edit
-    await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill('A');
-    await page.getByRole('button', { name: 'Apply' }).click();
-
-    // Click edit on the matching row
-    await page.getByRole('row', { name: 'Select row Edit TestCase 965' }).getByLabel('Edit').click();
-
-    // Update Alliance Code
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill('AB');
+    // Step 3: Update the Alliance Code
+    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(updatedAllianceCode);
     await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Step 4: Search again with the updated value and verify
+    await page.getByRole('textbox', { name: 'Search' }).click();
+    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(updatedAllianceCode);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await page.waitForLoadState('networkidle');
+
+    const updatedRow = page.getByRole('row').filter({ hasText: airlineData.name });
+    await expect(updatedRow).toBeVisible({ timeout: 10000 });
+    await expect(updatedRow).toContainText(updatedAllianceCode);
   });
 
   test.afterEach(async ({ page }) => {
