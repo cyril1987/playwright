@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test('login to dev.iconcile.com', async ({ page }) => {
-  const email = process.env.LOGIN_EMAIL!;
-  const password = process.env.LOGIN_PASSWORD!;
+  const email = process.env.LOGIN_EMAIL;
+  const password = process.env.LOGIN_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error('Missing LOGIN_EMAIL or LOGIN_PASSWORD in .env file');
+  }
 
   // Navigate to the login page
   await page.goto('https://dev.iconcile.com');
