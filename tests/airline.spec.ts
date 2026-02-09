@@ -10,11 +10,22 @@ const airlineData = {
   allianceCode: 'T',
 };
 
+async function waitForTableToLoad(page: Page) {
+  // Wait for the table to have at least one data row (initial load complete)
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('row').nth(1)).toBeVisible({ timeout: 15000 });
+  // Extra buffer to ensure the default search has fully completed
+  await page.waitForTimeout(2000);
+}
+
 async function searchByNumCode(page: Page, numCode: string) {
-  // Click on the Search textbox to open the filter dialog
+  // Wait for any ongoing data load to finish first
+  await waitForTableToLoad(page);
+
+  // Click on the Search textbox to open the filter panel
   await page.getByRole('textbox', { name: 'Search' }).click();
 
-  // Wait for the filter dialog to fully render
+  // Wait for the filter fields to be visible
   const numCodeField = page.getByRole('textbox', { name: 'Airline Num Code' });
   await expect(numCodeField).toBeVisible({ timeout: 5000 });
 
@@ -22,14 +33,14 @@ async function searchByNumCode(page: Page, numCode: string) {
   await numCodeField.clear();
   await numCodeField.fill(numCode);
 
-  // Wait for Apply button and click it
+  // Click Apply and wait for filtered results
   const applyButton = page.getByRole('button', { name: 'Apply' });
   await expect(applyButton).toBeVisible();
   await applyButton.click();
 
-  // Wait for the search results to load
+  // Wait for the filtered results to load
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 }
 
 test.describe('Airline Master', () => {
@@ -53,7 +64,9 @@ test.describe('Airline Master', () => {
     // Navigate to Industry Masters > Airline
     await page.getByRole('button', { name: 'Industry Masters' }).click();
     await page.getByRole('button', { name: 'Airline' }).click();
-    await page.waitForLoadState('networkidle');
+
+    // Wait for the airline table to fully load before any interaction
+    await waitForTableToLoad(page);
   });
 
   test('add a new airline and verify it appears in search results', async ({ page }) => {
@@ -68,7 +81,7 @@ test.describe('Airline Master', () => {
 
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // Step 2: Search by Num Code and verify the record exists
     await searchByNumCode(page, airlineData.numCode);
@@ -97,7 +110,7 @@ test.describe('Airline Master', () => {
     await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(updatedAllianceCode);
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // Step 4: Search again by Num Code and verify the update
     await searchByNumCode(page, airlineData.numCode);
