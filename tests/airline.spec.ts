@@ -46,9 +46,9 @@ test.describe('Airline Master', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
 
-    // Step 2: Search by Alliance Code and verify the record exists
+    // Step 2: Search by Num Code and verify the record exists
     await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(airlineData.allianceCode);
+    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
 
@@ -64,9 +64,9 @@ test.describe('Airline Master', () => {
   test('edit an airline and verify updated values', async ({ page }) => {
     const updatedAllianceCode = 'TA';
 
-    // Step 1: Search for the airline
+    // Step 1: Search for the airline by Num Code
     await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(airlineData.allianceCode);
+    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
 
@@ -80,9 +80,9 @@ test.describe('Airline Master', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
 
-    // Step 4: Search again with the updated value and verify
+    // Step 4: Search again by Num Code and verify the update
     await page.getByRole('textbox', { name: 'Search' }).click();
-    await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(updatedAllianceCode);
+    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
 
