@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('debug search flow', async ({ page }) => {
+test('debug search filter fields', async ({ page }) => {
   const email = process.env.LOGIN_EMAIL!;
   const password = process.env.LOGIN_PASSWORD!;
 
@@ -18,39 +18,48 @@ test('debug search flow', async ({ page }) => {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(2000);
 
-  // Click Search
-  console.log('=== BEFORE CLICKING SEARCH ===');
-  const searchBox = page.getByRole('textbox', { name: 'Search' });
-  console.log('Search box visible:', await searchBox.isVisible());
-  await searchBox.click();
-  await page.waitForTimeout(2000);
+  // Look at the search/filter area
+  console.log('=== ALL VISIBLE INPUT ELEMENTS ===');
+  const inputs = await page.locator('input:visible').all();
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i];
+    const id = await input.getAttribute('id');
+    const name = await input.getAttribute('name');
+    const type = await input.getAttribute('type');
+    const placeholder = await input.getAttribute('placeholder');
+    const ariaLabel = await input.getAttribute('aria-label');
 
-  // Capture what's visible after clicking search
-  console.log('\n=== AFTER CLICKING SEARCH ===');
+    // Try to find a label associated with this input
+    let labelText = '';
+    if (id) {
+      const label = page.locator(`label[for="${id}"]`);
+      if (await label.count() > 0) {
+        labelText = (await label.textContent()) || '';
+      }
+    }
 
-  // Check all visible textboxes
-  const textboxes = await page.getByRole('textbox').all();
-  console.log(`Found ${textboxes.length} textboxes:`);
-  for (const tb of textboxes) {
-    const name = await tb.getAttribute('name');
-    const placeholder = await tb.getAttribute('placeholder');
-    const ariaLabel = await tb.getAttribute('aria-label');
-    const visible = await tb.isVisible();
-    console.log(`  name="${name}" placeholder="${placeholder}" aria-label="${ariaLabel}" visible=${visible}`);
+    // Try to find a sibling/parent label
+    const parentLabel = input.locator('xpath=ancestor::div[1]//label');
+    let parentLabelText = '';
+    if (await parentLabel.count() > 0) {
+      parentLabelText = (await parentLabel.first().textContent()) || '';
+    }
+
+    console.log(`  [${i}] id="${id}" name="${name}" type="${type}" placeholder="${placeholder}" aria-label="${ariaLabel}" label="${labelText}" parentLabel="${parentLabelText}"`);
   }
 
-  // Check all visible buttons
-  const buttons = await page.getByRole('button').all();
-  console.log(`\nFound ${buttons.length} buttons:`);
-  for (const btn of buttons) {
-    const text = await btn.textContent();
-    const visible = await btn.isVisible();
-    if (visible) {
-      console.log(`  text="${text?.trim()}" visible=${visible}`);
+  // Check for any text near the filter inputs that could help identify them
+  console.log('\n=== FILTER AREA LABELS ===');
+  const labels = await page.locator('label:visible').all();
+  for (const label of labels) {
+    const text = (await label.textContent())?.trim();
+    const forAttr = await label.getAttribute('for');
+    if (text) {
+      console.log(`  text="${text}" for="${forAttr}"`);
     }
   }
 
-  // Take a screenshot of the search dialog state
-  await page.screenshot({ path: 'test-results/search-dialog.png', fullPage: true });
-  console.log('\nScreenshot saved to test-results/search-dialog.png');
+  // Take screenshot
+  await page.screenshot({ path: 'test-results/search-filter-area.png', fullPage: true });
+  console.log('\nScreenshot saved to test-results/search-filter-area.png');
 });
