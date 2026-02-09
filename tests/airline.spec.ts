@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // Use a unique suffix to avoid conflicts across test runs
 const uniqueId = Date.now().toString().slice(-4);
@@ -9,6 +9,28 @@ const airlineData = {
   icaoCode: 'TSA',
   allianceCode: 'T',
 };
+
+async function searchByNumCode(page: Page, numCode: string) {
+  // Click on the Search textbox to open the filter dialog
+  await page.getByRole('textbox', { name: 'Search' }).click();
+
+  // Wait for the filter dialog to fully render
+  const numCodeField = page.getByRole('textbox', { name: 'Airline Num Code' });
+  await expect(numCodeField).toBeVisible({ timeout: 5000 });
+
+  // Clear and fill the Num Code field
+  await numCodeField.clear();
+  await numCodeField.fill(numCode);
+
+  // Wait for Apply button and click it
+  const applyButton = page.getByRole('button', { name: 'Apply' });
+  await expect(applyButton).toBeVisible();
+  await applyButton.click();
+
+  // Wait for the search results to load
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
+}
 
 test.describe('Airline Master', () => {
   test.beforeEach(async ({ page }) => {
@@ -31,6 +53,7 @@ test.describe('Airline Master', () => {
     // Navigate to Industry Masters > Airline
     await page.getByRole('button', { name: 'Industry Masters' }).click();
     await page.getByRole('button', { name: 'Airline' }).click();
+    await page.waitForLoadState('networkidle');
   });
 
   test('add a new airline and verify it appears in search results', async ({ page }) => {
@@ -45,13 +68,10 @@ test.describe('Airline Master', () => {
 
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
 
     // Step 2: Search by Num Code and verify the record exists
-    await page.getByRole('textbox', { name: 'Search' }).click();
-    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
-    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await page.waitForLoadState('networkidle');
+    await searchByNumCode(page, airlineData.numCode);
 
     // Verify the row contains the correct data
     const row = page.getByRole('row').filter({ hasText: airlineData.name });
@@ -66,11 +86,7 @@ test.describe('Airline Master', () => {
     const updatedAllianceCode = 'TA';
 
     // Step 1: Search for the airline by Num Code
-    await page.getByRole('textbox', { name: 'Search' }).click();
-    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
-    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await page.waitForLoadState('networkidle');
+    await searchByNumCode(page, airlineData.numCode);
 
     // Step 2: Click edit on the matching row
     const row = page.getByRole('row').filter({ hasText: airlineData.name });
@@ -81,13 +97,10 @@ test.describe('Airline Master', () => {
     await page.getByRole('textbox', { name: 'Airline Alliance Code' }).fill(updatedAllianceCode);
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
 
     // Step 4: Search again by Num Code and verify the update
-    await page.getByRole('textbox', { name: 'Search' }).click();
-    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
-    await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await page.waitForLoadState('networkidle');
+    await searchByNumCode(page, airlineData.numCode);
 
     const updatedRow = page.getByRole('row').filter({ hasText: airlineData.name });
     await expect(updatedRow).toBeVisible({ timeout: 10000 });
