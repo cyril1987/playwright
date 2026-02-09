@@ -48,6 +48,7 @@ test.describe('Airline Master', () => {
 
     // Step 2: Search by Num Code and verify the record exists
     await page.getByRole('textbox', { name: 'Search' }).click();
+    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
     await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
@@ -66,6 +67,7 @@ test.describe('Airline Master', () => {
 
     // Step 1: Search for the airline by Num Code
     await page.getByRole('textbox', { name: 'Search' }).click();
+    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
     await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
@@ -82,6 +84,7 @@ test.describe('Airline Master', () => {
 
     // Step 4: Search again by Num Code and verify the update
     await page.getByRole('textbox', { name: 'Search' }).click();
+    await expect(page.getByRole('button', { name: 'Apply' })).toBeVisible({ timeout: 5000 });
     await page.getByRole('textbox', { name: 'Airline Num Code' }).fill(airlineData.numCode);
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.waitForLoadState('networkidle');
